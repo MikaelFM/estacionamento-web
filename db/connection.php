@@ -8,8 +8,7 @@
     {
         try {
             return new PDO("mysql:host=" . HOST . ";dbname=" . DB, USER, PASSWORD);
-            print("Conectado");
         } catch (PDOException $e) {
-            print("Error: " . $e->getMessage());
+            return false;
         }
     }
