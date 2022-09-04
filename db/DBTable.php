@@ -1,21 +1,18 @@
 <?php
 
-class Table {
+require_once __DIR__ . '/connection.php';
 
-    private $connection;
+class DBTable
+{
+
     public $table;
     public $fields;
 
-    public function __construct() {
-        $this->connection = connection();
-    }
-
     public function get_all()
     {
-
         $sql = "SELECT * FROM $this->table";
 
-        $statement = $this->connection->prepare($sql);
+        $statement = connection->prepare($sql);
 
         $statement->execute();
 
@@ -29,20 +26,13 @@ class Table {
     }
 
     public function get_where($fields = null, $where = null, $orderby = null)
-    {      
-        $sql = "SELECT :fields FROM $this->table :where :orderby";
-    
-        $statement = $this->connection->prepare($sql);
-
+    {
         $_fields = $fields != null ? $fields : '*';
-        $_where = $where != null ? "WHERE $where" : "";
+        $_where = $where != null ? 'WHERE '. $where : "";
+        $_orderby = $orderby != null ? 'ORDER BY '. $orderby : "";
 
-        $_orderby = $orderby != null ? "ORDER BY $orderby" : "";
-        $statement->bindParam(":fields", $_fields);
-        $statement->bindParam(":where", $_where);
-        $statement->bindParam(":orderby", $_orderby);
-
-        $statement->execute();
+        $sql = "SELECT $_fields FROM $this->table $_where $_orderby";
+        $statement = connection->prepare($sql);
 
         $resultado = array();
 
@@ -57,7 +47,7 @@ class Table {
     {
         $sql = "DELETE FROM $this->table WHERE id = :id";
 
-        $statement = $this->connection->prepare($sql);
+        $statement = connection->prepare($sql);
         $statement->bindParam(":id",  $id);
 
         $statement->execute();
@@ -65,23 +55,22 @@ class Table {
 
     public function insert($request)
     {
-        $sql = "INSERT INTO $this->table :columns VALUES :values";
-        $statement = $this->connection->prepare($sql);
+        $columns_array = array();
+        $values_array = array();
 
-        $values = "(";
-        $columns = "(";
         foreach($this->fields as $v){
             if(array_key_exists($v, $request)){
-                $columns .= $v;
-                $values .= $request[$v];
+                $columns_array[] = $v;
+                $values_array[] = "'$request[$v]'";
             }
         }
-        $columns .= ")";
-        $values .= ")";
 
-        $statement->bindParam(':columns', $columns);
-        $statement->bindParam(':values', $values);
+        $columns = implode(", ", $columns_array);
+        $values = implode(", ", $values_array);
 
+
+        $sql = "INSERT INTO $this->table ($columns) VALUES ($values)";
+        $statement = connection->prepare($sql);
         $statement->execute();
     }
     public function update($request)
@@ -92,16 +81,15 @@ class Table {
 
         foreach($this->fields as $v){
             if(array_key_exists($v, $request)){
-                $array_set[] = "$v = $request[$v]";
+                $array_set[] = "$v = '$request[$v]'";
             }
         }
-
         $set = implode(", ", $array_set);
 
-        $statement = $this->connection->prepare($sql);
-        $statement->bindParam(':id', $request['id']);
-        $statement->bindParam(':set', $set);
+        $sql = "UPDATE $this->table SET $set WHERE id= :id;";
 
+        $statement = connection->prepare($sql);
+        $statement->bindParam(':id', $request['id']);
         $statement->execute();
     }
 }

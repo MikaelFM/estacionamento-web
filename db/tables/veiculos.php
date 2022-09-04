@@ -1,8 +1,8 @@
 <?php
 
-require __DIR__ . '/../tables.php';
+require_once __DIR__ . '/../DBTable.php';
 
-class Veiculos extends Table {
+class Veiculos extends DBTable {
 
     public function __construct() {
         $this->table = 'veiculos';
